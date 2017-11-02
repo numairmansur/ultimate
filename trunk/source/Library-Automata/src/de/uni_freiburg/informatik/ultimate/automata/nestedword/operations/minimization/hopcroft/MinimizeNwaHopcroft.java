@@ -113,17 +113,14 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		while (!mWorklistIntCall.isEmpty()) {
 			final Collection<STATE> splitter = mWorklistIntCall.poll();
 			final int splitterSize = splitter.size();
-			final Incomings<STATE> incomings = new Incomings<>(splitter);
+			final IncomingsIntCall<LETTER, STATE> incomingsIntCall = new IncomingsIntCall<>(mOperand, splitter);
 			do {
-				markIncoming(incomings);
+				for (final STATE state : incomingsIntCall.next()) {
+					mPartition.mark(state);
+				}
 				mPartition.splitAll();
-			} while (splitter.size() == splitterSize);
+			} while (splitter.size() == splitterSize && incomingsIntCall.hasNext());
 		}
-	}
-
-	private void markIncoming(final Iterable<STATE> splitter) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
