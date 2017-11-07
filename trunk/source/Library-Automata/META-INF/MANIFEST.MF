@@ -64,6 +64,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
    de.uni_freiburg.informatik.ultimate.automata.nestedword,
    de.uni_freiburg.informatik.ultimate.util.datastructures",
+ de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.hopcroft,
  de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays;
   uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,
    de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization,
