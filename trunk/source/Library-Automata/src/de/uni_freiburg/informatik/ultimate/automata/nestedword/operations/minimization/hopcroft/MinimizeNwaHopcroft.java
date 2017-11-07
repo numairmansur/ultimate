@@ -88,14 +88,27 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 * @param operand
 	 *            operand
 	 */
-	protected MinimizeNwaHopcroft(final AutomataLibraryServices services,
+	public MinimizeNwaHopcroft(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		this(services, stateFactory, operand, null, false, true);
+	}
+
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            operand
+	 */
+	public MinimizeNwaHopcroft(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapOldState2newState,
 			final boolean separateFinalsAndNonfinals) {
 		super(services, stateFactory);
+		mOperand = operand;
 		printStartMessage();
 
-		mOperand = operand;
 		mWorklistIntCall = new Worklist<>(Math.max(mOperand.size(), 1));
 		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
@@ -114,12 +127,12 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final Collection<STATE> splitter = mWorklistIntCall.poll();
 			final int splitterSize = splitter.size();
 			final IncomingsIntCall<LETTER, STATE> incomingsIntCall = new IncomingsIntCall<>(mOperand, splitter);
-			do {
+			while (splitter.size() == splitterSize && incomingsIntCall.hasNext()) {
 				for (final STATE state : incomingsIntCall.next()) {
 					mPartition.mark(state);
 				}
 				mPartition.splitAll();
-			} while (splitter.size() == splitterSize && incomingsIntCall.hasNext());
+			}
 		}
 	}
 

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -358,12 +359,12 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 
 		@Override
-		public boolean contains(final Object o) {
-			throw new UnsupportedOperationException();
+		public Object[] toArray() {
+			return Arrays.copyOfRange(mStates, mFirst, mAfterLast);
 		}
 
 		@Override
-		public Object[] toArray() {
+		public boolean contains(final Object o) {
 			throw new UnsupportedOperationException();
 		}
 
