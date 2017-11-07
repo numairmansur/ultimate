@@ -265,6 +265,23 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	}
 
 	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		int idx = 0;
+		String separator = "";
+		while (idx < mStates.length) {
+			builder.append(separator);
+			separator = " ";
+			final Partition<STATE>.Block block = getBlock(mStates[idx]);
+			builder.append(block.toString());
+			idx = block.mAfterLast;
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public Iterator<IBlock<STATE>> blocksIterator() {
 		// code duplication with other iterator method - I blame Java
 		return new Iterator<IBlock<STATE>>() {
