@@ -167,7 +167,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		final int pos = posBlockPair.mPos;
 		final int afterMarked = block.mAfterMarked;
 		if (pos >= afterMarked) {
-			if (afterMarked != block.mFirst) {
+			if (afterMarked == block.mFirst) {
 				mMarkedBlocks.add(block);
 			}
 			// mark state
