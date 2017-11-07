@@ -113,7 +113,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
 
-		minimize(initialPartition, addMapOldState2newState);
+		minimize();
 
 		// construct result with library method
 		constructResultFromPartition(mPartition, addMapOldState2newState);
@@ -121,8 +121,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		printExitMessage();
 	}
 
-	private void minimize(final PartitionBackedSetOfPairs<STATE> initialPartition,
-			final boolean addMapOldState2newState) {
+	private void minimize() {
 		while (!mWorklistIntCall.isEmpty()) {
 			final Collection<STATE> splitter = mWorklistIntCall.poll();
 			final int splitterSize = splitter.size();
