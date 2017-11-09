@@ -2,6 +2,7 @@
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
+int minimizeNwaHopcroftSize = numberOfStates(minimizeNwaHopcroft(preprocessed));
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
 int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
@@ -17,6 +18,7 @@ int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB
 int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
 int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
 
+assert(minimizeNwaHopcroftSize == 8);
 assert(minimizeSevpaSize == 8);
 assert(shrinkNwaSize == 8);
 assert(minimizeNwaPmaxSatDirectBiSize == 8);
