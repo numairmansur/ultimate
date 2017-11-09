@@ -345,7 +345,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			mInWorklistIntCall = true;
 		}
 
-		public void removeFromWorklist() {
+		public void removeFromWorklistIntCall() {
 			assert mInWorklistIntCall : "Block was not in worklist.";
 			mInWorklistIntCall = false;
 		}

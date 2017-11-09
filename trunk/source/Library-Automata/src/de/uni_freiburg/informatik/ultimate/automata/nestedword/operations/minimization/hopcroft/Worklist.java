@@ -34,10 +34,13 @@ import java.util.function.Consumer;
 public class Worklist<STATE> {
 	private final PriorityQueue<Partition<STATE>.Block> mQueue;
 	private final Consumer<Partition<STATE>.Block> mAddBlockFunction;
+	private final Consumer<Partition<STATE>.Block> mRemoveBlockFunction;
 
-	public Worklist(final int initialCapacity, final Consumer<Partition<STATE>.Block> addBlockFunction) {
+	public Worklist(final int initialCapacity, final Consumer<Partition<STATE>.Block> addBlockFunction,
+			final Consumer<Partition<STATE>.Block> removeBlockFunction) {
 		mQueue = new PriorityQueue<>(initialCapacity, new BlockComparator());
 		mAddBlockFunction = addBlockFunction;
+		mRemoveBlockFunction = removeBlockFunction;
 	}
 
 	public boolean isEmpty() {
@@ -56,7 +59,9 @@ public class Worklist<STATE> {
 	}
 
 	public Collection<STATE> poll() {
-		return mQueue.poll();
+		final Partition<STATE>.Block block = mQueue.poll();
+		mRemoveBlockFunction.accept(block);
+		return block;
 	}
 
 	@Override
