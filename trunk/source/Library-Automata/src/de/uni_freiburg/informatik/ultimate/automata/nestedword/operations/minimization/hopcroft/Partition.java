@@ -99,12 +99,28 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	}
 
 	private int initializeFromAutomaton(final Worklist<STATE> worklistIntCall) {
+		final int finalStatesSize = mOperand.getFinalStates().size();
+		if (finalStatesSize > 0) {
+			final Block finals = new Block(0, finalStatesSize);
+			if (finalStatesSize < mStates.length) {
+				// both final and non-final states
+				final Block nonfinals = new Block(finalStatesSize, mStates.length);
+				return initializeFromAutomatonFinalNonfinal(finals, nonfinals, worklistIntCall);
+			}
+			// only final states
+			return initializeFromAutomatonSingleBlock(finals, worklistIntCall);
+		}
+		// TODO no final states, automaton is empty, could be simplified
+		final Block nonfinals = new Block(finalStatesSize, mStates.length);
+		return initializeFromAutomatonSingleBlock(nonfinals, worklistIntCall);
+	}
+
+	private int initializeFromAutomatonFinalNonfinal(final Partition<STATE>.Block finals,
+			final Partition<STATE>.Block nonfinals, final Worklist<STATE> worklistIntCall) {
 		final Collection<STATE> states = mOperand.getStates();
 		int backwardPointer = mStates.length - 1;
-		final Block finals = new Block(0, mOperand.getFinalStates().size());
-		final Block nonfinals = new Block(finals.mAfterLast, mStates.length);
 		for (final STATE state : states) {
-			assert !mState2PosAndBlock.containsKey(state) : "A state is duplicated in the initial partition.";
+			assert !mState2PosAndBlock.containsKey(state) : "A state is duplicated in the automaton.";
 			if (mOperand.isFinal(state)) {
 				// add to the front
 				mStates[mFirstInvalidIndex] = state;
@@ -124,6 +140,20 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			worklistIntCall.add(nonfinals);
 		}
 		return Math.max(finals.size(), nonfinals.size());
+	}
+
+	private int initializeFromAutomatonSingleBlock(final Partition<STATE>.Block block,
+			final Worklist<STATE> worklistIntCall) {
+		final Collection<STATE> states = mOperand.getStates();
+		for (final STATE state : states) {
+			assert !mState2PosAndBlock.containsKey(state) : "A state is duplicated in the automaton.";
+			// add to the front
+			mStates[mFirstInvalidIndex] = state;
+			mState2PosAndBlock.put(state, new PosBlockPair(mFirstInvalidIndex, block));
+			++mFirstInvalidIndex;
+		}
+		worklistIntCall.add(block);
+		return block.size();
 	}
 
 	private int initializeSingleton(final Worklist<STATE> worklistIntCall) {
