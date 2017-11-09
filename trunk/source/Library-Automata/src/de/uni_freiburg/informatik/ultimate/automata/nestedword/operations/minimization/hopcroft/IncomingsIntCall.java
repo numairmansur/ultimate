@@ -68,7 +68,7 @@ public class IncomingsIntCall<LETTER, STATE> implements Iterator<Iterable<STATE>
 			// can only happen if this method was called twice without calling next()
 			return true;
 		}
-		do {
+		while (mStatesIdx < mSplitter.size()) {
 			// check if there is a next internal letter
 			if (mNextLetters == null) {
 				mIsInternal = true;
@@ -89,7 +89,7 @@ public class IncomingsIntCall<LETTER, STATE> implements Iterator<Iterable<STATE>
 			// try the next state
 			mNextLetters = null;
 			++mStatesIdx;
-		} while (mStatesIdx < mSplitter.size());
+		}
 		return false;
 	}
 
