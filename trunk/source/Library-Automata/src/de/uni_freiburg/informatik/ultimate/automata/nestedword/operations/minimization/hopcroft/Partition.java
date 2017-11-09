@@ -370,7 +370,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 		@Override
 		public boolean isInitial() {
-			return mMarkedBlocks.contains(this);
+			return mInitialBlocks.contains(this);
 		}
 
 		@Override

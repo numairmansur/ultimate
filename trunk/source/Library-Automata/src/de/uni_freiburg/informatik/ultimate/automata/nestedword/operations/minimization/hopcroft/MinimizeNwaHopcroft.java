@@ -116,6 +116,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		minimize();
 
 		// construct result with library method
+		mPartition.markInitialBlocks(mOperand.getInitialStates());
 		constructResultFromPartition(mPartition, addMapOldState2newState);
 
 		printExitMessage();
