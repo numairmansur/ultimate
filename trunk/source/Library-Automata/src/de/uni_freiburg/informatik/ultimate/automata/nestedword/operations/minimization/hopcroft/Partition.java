@@ -247,7 +247,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			// add old block to worklist if it was the splitter and incoming transition analysis was not finished
 			if (isUnfinishedSplitterIntCall) {
 				if (isIntCallSplit && !block.isInWorklistIntCall()) {
-					worklistIntCall.add(newBlockSmaller);
+					worklistIntCall.add(block);
 				}
 			}
 		}
