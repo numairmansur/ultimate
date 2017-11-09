@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDirectBi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.hopcroft.MinimizeNwaHopcroft;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
@@ -58,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * Examples used by delta debugger.
  * <p>
  * NOTE: Users may insert their sample code as a new method and leave it here.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 @SuppressWarnings({ "squid:S00112", "squid:S1452",
@@ -84,6 +85,10 @@ public class AutomatonDebuggerExamples {
 		 * Used for default settings to inform user that the method was not selected.
 		 */
 		EXCEPTION_DUMMY,
+		/**
+		 * {@link MinimizeNwaHopcroft}.
+		 */
+		MINIMIZE_NWA_HOPCROFT,
 		/**
 		 * {@link MinimizeNwaMaxSAT}.
 		 */
@@ -156,7 +161,7 @@ public class AutomatonDebuggerExamples {
 
 	/**
 	 * Getter for an {@link IOperation}.
-	 * 
+	 *
 	 * @param type
 	 *            operation type
 	 * @param automaton
@@ -175,6 +180,10 @@ public class AutomatonDebuggerExamples {
 		switch (type) {
 			case EXCEPTION_DUMMY:
 				throw new IllegalArgumentException("Select a valid operation for delta debugging.");
+
+			case MINIMIZE_NWA_HOPCROFT:
+				operation = minimizeNwaHopcroft(automaton, factory);
+				break;
 
 			case MINIMIZE_NWA_MAXSAT:
 				operation = minimizeNwaMaxSat(automaton, factory);
@@ -248,6 +257,22 @@ public class AutomatonDebuggerExamples {
 				throw new IllegalArgumentException("Unknown operation.");
 		}
 		return operation;
+	}
+
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link MinimizeNwaHopcroft} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<String, String, ? super StringFactory> minimizeNwaHopcroft(
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
+		final IDoubleDeckerAutomaton<String, String> preprocessed =
+				new RemoveUnreachable<>(mServices, automaton).getResult();
+		return new MinimizeNwaHopcroft<>(mServices, factory, preprocessed);
 	}
 
 	/**
