@@ -109,8 +109,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mOperand = operand;
 		printStartMessage();
 
-		mWorklistIntCall = new Worklist<>(Math.max(mOperand.size(), 1), Partition<STATE>.Block::addToWorklistIntCall,
-				Partition<STATE>.Block::removeFromWorklistIntCall);
+		mWorklistIntCall = Worklist.getWorklistIntCall(mOperand.size());
 		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
 

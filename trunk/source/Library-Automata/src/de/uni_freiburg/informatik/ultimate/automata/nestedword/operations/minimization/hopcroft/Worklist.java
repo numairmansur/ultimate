@@ -43,6 +43,11 @@ public class Worklist<STATE> {
 		mRemoveBlockFunction = removeBlockFunction;
 	}
 
+	public static <STATE> Worklist<STATE> getWorklistIntCall(final int operandSize) {
+		return new Worklist<>(Math.max(operandSize, 1), Partition<STATE>.Block::addToWorklistIntCall,
+				Partition<STATE>.Block::removeFromWorklistIntCall);
+	}
+
 	public boolean isEmpty() {
 		return mQueue.isEmpty();
 	}
