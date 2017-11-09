@@ -213,6 +213,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 	}
 
+	// TODO revise parameters after returns work
 	public void splitAll(final Collection<STATE> splitter, final boolean splitterHasMoreActionsIntCall,
 			final boolean isIntCallSplit, final Worklist<STATE> worklistIntCall) {
 		while (!mMarkedBlocks.isEmpty()) {
@@ -242,11 +243,11 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 			// add new block to worklist
 			worklistIntCall.add(newBlockSmaller);
-			final boolean isUnfinishedSplitterIntCall = !splitterHasMoreActionsIntCall && (block == splitter);
 
 			// add old block to worklist if it was the splitter and incoming transition analysis was not finished
-			if (isUnfinishedSplitterIntCall) {
-				if (isIntCallSplit && !block.isInWorklistIntCall()) {
+			if (block == splitter) {
+				if (isIntCallSplit && splitterHasMoreActionsIntCall) {
+					assert !block.isInWorklistIntCall() : "The splitter should have been removed from the worklist.";
 					worklistIntCall.add(block);
 				}
 			}
