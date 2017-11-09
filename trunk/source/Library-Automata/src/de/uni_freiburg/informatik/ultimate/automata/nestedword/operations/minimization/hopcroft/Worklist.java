@@ -67,14 +67,14 @@ public class Worklist<STATE> {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append("<<");
+		builder.append("[");
 		String append = "";
 		for (final Partition<STATE>.Block block : mQueue) {
 			builder.append(append);
 			append = ", ";
 			builder.append(block);
 		}
-		builder.append(">>");
+		builder.append("]");
 		return builder.toString();
 	}
 
