@@ -109,7 +109,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mOperand = operand;
 		printStartMessage();
 
-		mWorklistIntCall = new Worklist<>(Math.max(mOperand.size(), 1));
+		mWorklistIntCall = new Worklist<>(Math.max(mOperand.size(), 1), Partition<STATE>.Block::addToWorklistIntCall);
 		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
 
@@ -130,7 +130,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 				for (final STATE state : incomingsIntCall.next()) {
 					mPartition.mark(state);
 				}
-				mPartition.splitAll();
+				mPartition.splitAll(splitter, incomingsIntCall.hasNext(), true, mWorklistIntCall);
 			}
 		}
 	}

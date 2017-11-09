@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.function.Consumer;
 
 public class Worklist<STATE> {
 	private final PriorityQueue<Partition<STATE>.Block> mQueue;
+	private final Consumer<Partition<STATE>.Block> mAddBlockFunction;
 
-	public Worklist(final int initialCapacity) {
-		mQueue = new PriorityQueue<>(initialCapacity,new BlockComparator());
+	public Worklist(final int initialCapacity, final Consumer<Partition<STATE>.Block> addBlockFunction) {
+		mQueue = new PriorityQueue<>(initialCapacity, new BlockComparator());
+		mAddBlockFunction = addBlockFunction;
 	}
 
 	public boolean isEmpty() {
@@ -43,7 +46,13 @@ public class Worklist<STATE> {
 
 	public void add(final Partition<STATE>.Block block) {
 		assert !mQueue.contains(block);
+		mAddBlockFunction.accept(block);
 		mQueue.add(block);
+	}
+
+	public void addExisting(final Partition<STATE>.Block block) {
+		assert mQueue.contains(block);
+		mAddBlockFunction.accept(block);
 	}
 
 	public Collection<STATE> poll() {

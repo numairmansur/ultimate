@@ -183,38 +183,53 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 	}
 
-	public void splitAll() {
+	public void splitAll(final Collection<STATE> splitter, final boolean splitterHasMoreActionsIntCall,
+			final boolean isIntCallSplit, final Worklist<STATE> worklistIntCall) {
 		while (!mMarkedBlocks.isEmpty()) {
 			final Block block = mMarkedBlocks.pop();
 			if (block.mAfterMarked == block.mAfterLast) {
 				// all states marked; no split necessary, just unmark all states
 				block.mAfterMarked = block.mFirst;
 				return;
-			} else if (block.mAfterMarked == block.mFirst) {
+			}
+			if (block.mAfterMarked == block.mFirst) {
 				// nothing marked; no split necessary
 				assert false : "This block was never marked, so it should not be a split candidate.";
 				return;
 			}
 			// some but not all states marked; split away the smaller part
+			final Block newBlockSmaller;
 			if (block.mAfterMarked < (block.mAfterLast - block.mFirst / 2)) {
 				// first part is smaller
-				splitHelper(block.mFirst, block.mAfterMarked);
+				newBlockSmaller = splitHelper(block.mFirst, block.mAfterMarked);
 				block.mFirst = block.mAfterMarked;
 			} else {
 				// last part is smaller
-				splitHelper(block.mAfterMarked, block.mAfterLast);
+				newBlockSmaller = splitHelper(block.mAfterMarked, block.mAfterLast);
 				block.mAfterLast = block.mAfterMarked;
 				block.mAfterMarked = block.mFirst;
+			}
+
+			// add new block to worklist
+			worklistIntCall.add(newBlockSmaller);
+			final boolean isUnfinishedSplitterIntCall = !splitterHasMoreActionsIntCall && (block == splitter);
+
+			// add old block to worklist if it was the splitter and incoming transition analysis was not finished
+			if (isUnfinishedSplitterIntCall) {
+				if (isIntCallSplit && !block.isInWorklistIntCall()) {
+					worklistIntCall.add(newBlockSmaller);
+				}
 			}
 		}
 	}
 
-	private void splitHelper(final int first, final int afterLast) {
+	private Partition<STATE>.Block splitHelper(final int first, final int afterLast) {
 		++mSize;
 		final Block newBlock = new Block(first, afterLast);
 		for (int idx = first; idx < afterLast; ++idx) {
 			mState2PosAndBlock.get(mStates[idx]).mBlock = newBlock;
 		}
+		return newBlock;
 	}
 
 	public void markInitialBlocks(final Iterable<STATE> initialStates) {
@@ -312,12 +327,27 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		private int mFirst;
 		private int mAfterLast;
 		private int mAfterMarked;
+		private boolean mInWorklistIntCall;
 
 		public Block(final int first, final int last) {
 			assert first < last : "A block must contain at least one element.";
 			mFirst = first;
 			mAfterLast = last;
 			mAfterMarked = mFirst;
+		}
+
+		public boolean isInWorklistIntCall() {
+			return mInWorklistIntCall;
+		}
+
+		public void addToWorklistIntCall() {
+			assert !mInWorklistIntCall : "Block already was in worklist IntCall.";
+			mInWorklistIntCall = true;
+		}
+
+		public void removeFromWorklist() {
+			assert mInWorklistIntCall : "Block was not in worklist.";
+			mInWorklistIntCall = false;
 		}
 
 		@Override
