@@ -53,14 +53,9 @@ public class Worklist<STATE> {
 	}
 
 	public void add(final Partition<STATE>.Block block) {
-		assert !mQueue.contains(block);
+		assert !mQueue.contains(block) : "Adding a block to worklist that is already present.";
 		mAddBlockFunction.accept(block);
 		mQueue.add(block);
-	}
-
-	public void addExisting(final Partition<STATE>.Block block) {
-		assert mQueue.contains(block);
-		mAddBlockFunction.accept(block);
 	}
 
 	public Collection<STATE> poll() {
