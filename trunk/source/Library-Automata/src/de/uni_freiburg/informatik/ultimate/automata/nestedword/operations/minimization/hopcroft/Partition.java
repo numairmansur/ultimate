@@ -110,6 +110,10 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			// only final states
 			return initializeFromAutomatonSingleBlock(finals, worklistIntCall);
 		}
+		if (mStates.length == 0) {
+			// no states at all
+			return 0;
+		}
 		// TODO no final states, automaton is empty, could be simplified
 		final Block nonfinals = new Block(finalStatesSize, mStates.length);
 		return initializeFromAutomatonSingleBlock(nonfinals, worklistIntCall);
@@ -331,7 +335,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	public Iterator<IBlock<STATE>> blocksIterator() {
 		// code duplication with other iterator method - I blame Java
 		return new Iterator<IBlock<STATE>>() {
-			private Block mNext = getBlock(mStates[0]);
+			private Block mNext = (mStates.length == 0) ? null : getBlock(mStates[0]);
 
 			@Override
 			public boolean hasNext() {
