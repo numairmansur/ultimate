@@ -225,12 +225,12 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			if (block.mAfterMarked == block.mAfterLast) {
 				// all states marked; no split necessary, just unmark all states
 				block.mAfterMarked = block.mFirst;
-				return;
+				continue;
 			}
 			if (block.mAfterMarked == block.mFirst) {
 				// nothing marked; no split necessary
 				assert false : "This block was never marked, so it should not be a split candidate.";
-				return;
+				continue;
 			}
 			// some but not all states marked; split away the smaller part
 			final Block newBlockSmaller;
