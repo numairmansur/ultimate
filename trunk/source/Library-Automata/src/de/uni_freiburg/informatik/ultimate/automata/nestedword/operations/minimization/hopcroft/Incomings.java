@@ -30,10 +30,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
 
 public abstract class Incomings<LETTER, STATE> implements Iterator<Iterable<STATE>> {
 	// operand (for finding incoming transitions)
@@ -62,8 +60,8 @@ public abstract class Incomings<LETTER, STATE> implements Iterator<Iterable<STAT
 		final Collection<STATE> res = new ArrayList<>();
 		for (int i = mSplitter.size() - 1; i >= mStatesIdx; --i) {
 			final STATE state = mSplitter.get(i);
-			for (final IIncomingTransitionlet<LETTER, STATE> trans : getIncomingProvider().apply(state, mNextLetter)) {
-				res.add(trans.getPred());
+			for (final STATE pred : getPredecessors(state, mNextLetter)) {
+				res.add(pred);
 			}
 		}
 
@@ -80,10 +78,13 @@ public abstract class Incomings<LETTER, STATE> implements Iterator<Iterable<STAT
 	protected abstract Set<LETTER> getVisitedLetters();
 
 	/**
-	 * @return An incoming transition provider.
+	 * @param state
+	 *            Successor state.
+	 * @param letter
+	 *            letter
+	 * @return an iterable of predecessor states
 	 */
-	protected abstract BiFunction<STATE, LETTER, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>>
-			getIncomingProvider();
+	protected abstract Iterable<STATE> getPredecessors(STATE state, LETTER letter);
 
 	protected final boolean hasStatesLeft() {
 		return mStatesIdx < mSplitter.size();

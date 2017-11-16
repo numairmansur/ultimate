@@ -28,8 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
@@ -81,8 +81,26 @@ public class IncomingsIntCall<LETTER, STATE> extends Incomings<LETTER, STATE> {
 	}
 
 	@Override
-	protected BiFunction<STATE, LETTER, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>>
-			getIncomingProvider() {
-		return mIsInternal ? mOperand::internalPredecessors : mOperand::callPredecessors;
+	protected Iterable<STATE> getPredecessors(final STATE state, final LETTER letter) {
+		return new Iterable<STATE>() {
+			final Iterator<? extends IIncomingTransitionlet<LETTER, STATE>> mIt = mIsInternal
+					? mOperand.internalPredecessors(state, letter).iterator()
+					: mOperand.callPredecessors(state, letter).iterator();
+
+			@Override
+			public Iterator<STATE> iterator() {
+				return new Iterator<STATE>() {
+					@Override
+					public boolean hasNext() {
+						return mIt.hasNext();
+					}
+
+					@Override
+					public STATE next() {
+						return mIt.next().getPred();
+					}
+				};
+			}
+		};
 	}
 }
