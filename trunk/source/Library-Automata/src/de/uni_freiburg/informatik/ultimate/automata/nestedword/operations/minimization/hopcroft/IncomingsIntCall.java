@@ -26,40 +26,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.hopcroft;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
 
-public class IncomingsIntCall<LETTER, STATE> implements Iterator<Iterable<STATE>> {
-	// operand (for finding incoming transitions)
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	// splitter states
-	private final ArrayList<STATE> mSplitter;
-	// current state index
-	private int mStatesIdx;
+public class IncomingsIntCall<LETTER, STATE> extends Incomings<LETTER, STATE> {
 	// visited letters
 	private final Set<LETTER> mVisitedLettersInternal;
 	private final Set<LETTER> mVisitedLettersCall;
-	// next letter to visit
-	private LETTER mNextLetter;
-	private Iterator<LETTER> mNextLetters;
+	// flag to handle both internal and call transitions in one class
 	private boolean mIsInternal;
 
 	public IncomingsIntCall(final INestedWordAutomaton<LETTER, STATE> operand, final Collection<STATE> splitter) {
-		mOperand = operand;
-		mSplitter = new ArrayList<>(splitter);
-		mStatesIdx = 0;
+		super(operand, splitter);
 		mVisitedLettersInternal = new HashSet<>();
 		mVisitedLettersCall = new HashSet<>();
-		mNextLetter = null;
-		mNextLetters = null;
 	}
 
 	@Override
@@ -68,11 +53,11 @@ public class IncomingsIntCall<LETTER, STATE> implements Iterator<Iterable<STATE>
 			// can only happen if this method was called twice without calling next()
 			return true;
 		}
-		while (mStatesIdx < mSplitter.size()) {
+		while (hasStatesLeft()) {
 			// check if there is a next internal letter
 			if (mNextLetters == null) {
 				mIsInternal = true;
-				mNextLetters = getIncomingLetters();
+				mNextLetters = mOperand.lettersInternalIncoming(getCurrentState()).iterator();
 			}
 			if (findFreshLetter()) {
 				return true;
@@ -80,56 +65,24 @@ public class IncomingsIntCall<LETTER, STATE> implements Iterator<Iterable<STATE>
 			if (mIsInternal) {
 				// also try call letters
 				mIsInternal = false;
-				mNextLetters = getIncomingLetters();
+				mNextLetters = mOperand.lettersCallIncoming(getCurrentState()).iterator();
 				if (findFreshLetter()) {
 					return true;
 				}
 			}
-
-			// try the next state
-			mNextLetters = null;
-			++mStatesIdx;
+			tryNextState();
 		}
 		return false;
 	}
 
 	@Override
-	public Collection<STATE> next() {
-		assert mNextLetter != null : "This iterator relies on first calling hasNext() before calling next().";
-
-		final Collection<STATE> res = new ArrayList<>();
-		final BiFunction<STATE, LETTER, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> getTransitions =
-				mIsInternal ? mOperand::internalPredecessors : mOperand::callPredecessors;
-		for (int i = mSplitter.size() - 1; i >= mStatesIdx; --i) {
-			final STATE state = mSplitter.get(i);
-			for (final IIncomingTransitionlet<LETTER, STATE> trans : getTransitions.apply(state, mNextLetter)) {
-				res.add(trans.getPred());
-			}
-		}
-
-		final Set<LETTER> visitedLetters = mIsInternal ? mVisitedLettersInternal : mVisitedLettersCall;
-		assert !visitedLetters.contains(mNextLetter) : "A letter was visited twice.";
-		visitedLetters.add(mNextLetter);
-		mNextLetter = null;
-
-		return res;
+	protected Set<LETTER> getVisitedLetters() {
+		return mIsInternal ? mVisitedLettersInternal : mVisitedLettersCall;
 	}
 
-	private boolean findFreshLetter() {
-		final Predicate<LETTER> pred = mIsInternal ? mVisitedLettersInternal::contains : mVisitedLettersCall::contains;
-		while (mNextLetters.hasNext()) {
-			final LETTER letter = mNextLetters.next();
-			if (!pred.test(letter)) {
-				mNextLetter = letter;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private Iterator<LETTER> getIncomingLetters() {
-		return mIsInternal
-				? mOperand.lettersInternalIncoming(mSplitter.get(mStatesIdx)).iterator()
-				: mOperand.lettersCallIncoming(mSplitter.get(mStatesIdx)).iterator();
+	@Override
+	protected BiFunction<STATE, LETTER, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>>
+			getIncomingProvider() {
+		return mIsInternal ? mOperand::internalPredecessors : mOperand::callPredecessors;
 	}
 }
