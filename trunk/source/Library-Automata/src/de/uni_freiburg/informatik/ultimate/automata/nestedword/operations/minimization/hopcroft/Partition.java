@@ -171,6 +171,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			final Worklist<STATE> worklistIntCall) {
 		int largestBlockSizeInitialPartition = 0;
 		for (final Set<STATE> states : initialPartition) {
+			assert assertStatesSeparation(states) : "The initial partition must be consistent wrt. accepting states.";
 			final Block block = addBlock(states);
 			worklistIntCall.add(block);
 			++mSize;
@@ -178,6 +179,25 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 		assert mFirstInvalidIndex == mStates.length : "Some states are missing in the initial partition.";
 		return largestBlockSizeInitialPartition;
+	}
+
+	/**
+	 * Checks that the states in a given block are all either final or non-final.
+	 *
+	 * @param equivalenceClasses
+	 *            partition passed in constructor
+	 * @return true iff equivalence classes respect final status of states
+	 */
+	private boolean assertStatesSeparation(final Set<STATE> states) {
+		final Iterator<STATE> it = states.iterator();
+		assert (it.hasNext());
+		final boolean isFinal = mOperand.isFinal(it.next());
+		while (it.hasNext()) {
+			if (isFinal != mOperand.isFinal(it.next())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private Partition<STATE>.Block addBlock(final Collection<STATE> states) {
