@@ -68,10 +68,15 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	private final Deque<Block> mMarkedBlocks;
 	// contains those blocks that contain an initial state in the final stage; LinkedHashSet for iteration order
 	private final LinkedHashSet<Block> mInitialBlocks;
+	/*
+	 * true if the automaton is nondeterministic, in which case we cannot exploit the efficient worklist policy
+	 * (because it is unsound for nondeterministic automata)
+	 */
+	private final boolean mIsNondeterministic;
 
 	public Partition(final INestedWordAutomaton<?, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean separateFinalsAndNonfinals,
-			final Worklist<STATE> worklistIntCall) {
+			final Worklist<STATE> worklistIntCall, final boolean isNondeterministic) {
 		mOperand = operand;
 		final int numberOfStates = operand.size();
 		mStates = initializeArray(numberOfStates);
@@ -80,6 +85,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		mSize = 0;
 		mMarkedBlocks = new ArrayDeque<>();
 		mInitialBlocks = new LinkedHashSet<>();
+		mIsNondeterministic = isNondeterministic;
 
 		if (initialPartition == null) {
 			if (separateFinalsAndNonfinals) {
@@ -265,11 +271,15 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 				block.mAfterMarked = block.mFirst;
 			}
 
-			// add new block to worklist
+			// add new (smaller) block to worklist unconditionally
 			worklistIntCall.add(newBlockSmaller);
 
-			// add old block to worklist if it was the splitter and incoming transition analysis was not finished
-			if (block == splitter) {
+			// add old (bigger) block to worklist conditionally
+			if (mIsNondeterministic && !block.isInWorklistIntCall()) {
+				// for nondeterministic automata
+				worklistIntCall.add(block);
+			} else if (block == splitter) {
+				// for the old block being the splitter and incoming transition analysis not having finished
 				if (isIntCallSplit && splitterHasMoreActionsIntCall) {
 					assert !block.isInWorklistIntCall() : "The splitter should have been removed from the worklist.";
 					worklistIntCall.add(block);
@@ -440,7 +450,10 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 		@Override
 		public boolean isRepresentativeIndependentInternalsCalls() {
-			// this method should only be called after refinement termination, so it is safe to always return true
+			/*
+			 * This method should only be called after refinement has terminated, and then we have computed a direct
+			 * bisimulation (for NFA).
+			 */
 			return true;
 		}
 

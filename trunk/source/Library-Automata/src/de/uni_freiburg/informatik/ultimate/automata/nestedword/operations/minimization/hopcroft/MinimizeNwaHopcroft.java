@@ -30,10 +30,12 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
@@ -74,10 +76,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	/*
+	 * Hopcroft's splitting policy allows to add only one of the two resulting blocks to the worklist. However, this is
+	 * only sound for deterministic automata. This flag controls if the operand should be checked for determinism
+	 * initially or not.
+	 */
+	private static final boolean CHECK_FOR_DETERMINISM = false;
+
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final Partition<STATE> mPartition;
 	private final Worklist<STATE> mWorklistIntCall;
+	/*
+	 * true only if the automaton is deterministic
+	 * This can be exploited for an efficient worklist policy, which is unsound for nondeterministic automata.
+	 */
+	private final boolean mIsDeterministic;
 
+	// statistics data
 	private final int mInitialPartitionSize;
 
 	/**
@@ -87,9 +102,12 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 *            state factory
 	 * @param operand
 	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public MinimizeNwaHopcroft(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, true);
 	}
 
@@ -100,17 +118,22 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 *            state factory
 	 * @param operand
 	 *            operand
+	 * @throws AutomataOperationCanceledException
+	 *             if timeout exceeds
 	 */
 	public MinimizeNwaHopcroft(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapOldState2newState,
-			final boolean separateFinalsAndNonfinals) {
+			final boolean separateFinalsAndNonfinals) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		printStartMessage();
 
+		mIsDeterministic = CHECK_FOR_DETERMINISM ? new IsDeterministic<>(mServices, mOperand).getResult() : false;
+
 		mWorklistIntCall = Worklist.getWorklistIntCall(mOperand.size());
-		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall);
+		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall,
+				!mIsDeterministic);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
 
 		minimize();
