@@ -1,0 +1,70 @@
+// Author: Christian Schilling <schillic@informatik.uni-freiburg.de>
+// Date: 2017-11-16
+//
+// Shows that adding both blocks to worklist after split is necessary for NFA.
+//
+// To trigger this bug, there have to be more non-accepting states so that they
+// are visited first. The nondeterminism is in q2, which has the same transition
+// as q1 (to q4) and as q3 (to q5). Because only one of q4 and q5 is added to
+// the worklist, q2 stays in the same block with either q1 or q3 (depending on
+// the iteration order), which is wrong. This can only be found out if we add
+// all split blocks in the worklist.
+
+FiniteAutomaton preprocessed = removeUnreachable(fa);
+
+int minimizeNwaHopcroftSize = numberOfStates(minimizeNwaHopcroft(preprocessed));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatDirectBiSize = numberOfStates(minimizeNwaPmaxSatDirectBi(preprocessed));
+int minimizeNwaPmaxSatDirectSize = numberOfStates(minimizeNwaPmaxSatDirect(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeNwaHopcroftSize == 7);
+assert(minimizeSevpaSize == 7);
+assert(shrinkNwaSize == 7);
+assert(minimizeNwaPmaxSatDirectBiSize == 7);
+assert(minimizeNwaPmaxSatDirectSize == 7);
+assert(minimizeDfaSimulationSize == 7);
+assert(reduceNwaDirectSimulationSize == 7);
+assert(reduceNwaDirectSimulationBSize == 7);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 7);
+assert(buchiReduceSize == 5);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+assert(reduceBuchiFairDirectSimulationSize == 5);
+assert(reduceBuchiFairSimulationSize == 5);
+
+FiniteAutomaton fa = (
+  alphabet = {a b c},
+  states = {q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12},
+  initialStates = {q0 q1 q2},
+  finalStates = {q6 q7 q8 q9 q10 q11 q12},
+  transitions = {
+    (q0 a q1)
+    (q0 b q2)
+    (q0 c q3)
+    (q1 a q4)
+    (q2 a q4)
+    (q2 a q5)
+    (q3 a q5)
+    (q4 a q6)
+    (q5 b q6)
+    (q6 a q7)
+    (q7 a q8)
+    (q8 a q9)
+    (q9 a q10)
+    (q10 a q11)
+    (q11 a q12)
+    (q12 a q6)
+  }
+);
