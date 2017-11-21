@@ -76,7 +76,8 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 	public Partition(final INestedWordAutomaton<?, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean separateFinalsAndNonfinals,
-			final Worklist<STATE> worklistIntCall, final boolean isNondeterministic) {
+			final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet,
+			final boolean isNondeterministic) {
 		mOperand = operand;
 		final int numberOfStates = operand.size();
 		mStates = initializeArray(numberOfStates);
@@ -89,13 +90,13 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 		if (initialPartition == null) {
 			if (separateFinalsAndNonfinals) {
-				mLargestBlockSizeInitialPartition = initializeFromAutomaton(worklistIntCall);
+				mLargestBlockSizeInitialPartition = initializeFromAutomaton(worklistIntCall, worklistRet);
 			} else {
-				mLargestBlockSizeInitialPartition = initializeSingleton(worklistIntCall);
+				mLargestBlockSizeInitialPartition = initializeSingleton(worklistIntCall, worklistRet);
 			}
 		} else {
 			mLargestBlockSizeInitialPartition =
-					initializeFromPartition(initialPartition.getRelation(), worklistIntCall);
+					initializeFromPartition(initialPartition.getRelation(), worklistIntCall, worklistRet);
 		}
 	}
 
@@ -104,17 +105,17 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		return (STATE[]) new Object[numberOfStates];
 	}
 
-	private int initializeFromAutomaton(final Worklist<STATE> worklistIntCall) {
+	private int initializeFromAutomaton(final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		final int finalStatesSize = mOperand.getFinalStates().size();
 		if (finalStatesSize > 0) {
 			final Block finals = new Block(0, finalStatesSize);
 			if (finalStatesSize < mStates.length) {
 				// both final and non-final states
 				final Block nonfinals = new Block(finalStatesSize, mStates.length);
-				return initializeFromAutomatonFinalNonfinal(finals, nonfinals, worklistIntCall);
+				return initializeFromAutomatonFinalNonfinal(finals, nonfinals, worklistIntCall, worklistRet);
 			}
 			// only final states
-			return initializeFromAutomatonSingleBlock(finals, worklistIntCall);
+			return initializeFromAutomatonSingleBlock(finals, worklistIntCall, worklistRet);
 		}
 		if (mStates.length == 0) {
 			// no states at all
@@ -122,11 +123,11 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 		// TODO no final states, automaton is empty, could be simplified
 		final Block nonfinals = new Block(finalStatesSize, mStates.length);
-		return initializeFromAutomatonSingleBlock(nonfinals, worklistIntCall);
+		return initializeFromAutomatonSingleBlock(nonfinals, worklistIntCall, worklistRet);
 	}
 
 	private int initializeFromAutomatonFinalNonfinal(final Partition<STATE>.Block finals,
-			final Partition<STATE>.Block nonfinals, final Worklist<STATE> worklistIntCall) {
+			final Partition<STATE>.Block nonfinals, final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		final Collection<STATE> states = mOperand.getStates();
 		int backwardPointer = mStates.length - 1;
 		for (final STATE state : states) {
@@ -145,15 +146,17 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 		if (!finals.isEmpty()) {
 			worklistIntCall.add(finals);
+			worklistRet.add(finals);
 		}
 		if (!nonfinals.isEmpty()) {
 			worklistIntCall.add(nonfinals);
+			worklistRet.add(nonfinals);
 		}
 		return Math.max(finals.size(), nonfinals.size());
 	}
 
 	private int initializeFromAutomatonSingleBlock(final Partition<STATE>.Block block,
-			final Worklist<STATE> worklistIntCall) {
+			final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		final Collection<STATE> states = mOperand.getStates();
 		for (final STATE state : states) {
 			assert !mState2PosAndBlock.containsKey(state) : "A state is duplicated in the automaton.";
@@ -163,23 +166,26 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			++mFirstInvalidIndex;
 		}
 		worklistIntCall.add(block);
+		worklistRet.add(block);
 		return block.size();
 	}
 
-	private int initializeSingleton(final Worklist<STATE> worklistIntCall) {
+	private int initializeSingleton(final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		final Block block = addBlock(mOperand.getStates());
 		worklistIntCall.add(block);
+		worklistRet.add(block);
 		mSize = 1;
 		return mStates.length;
 	}
 
 	private int initializeFromPartition(final Collection<Set<STATE>> initialPartition,
-			final Worklist<STATE> worklistIntCall) {
+			final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		int largestBlockSizeInitialPartition = 0;
 		for (final Set<STATE> states : initialPartition) {
 			assert assertStatesSeparation(states) : "The initial partition must be consistent wrt. accepting states.";
 			final Block block = addBlock(states);
 			worklistIntCall.add(block);
+			worklistRet.add(block);
 			++mSize;
 			largestBlockSizeInitialPartition = Math.max(largestBlockSizeInitialPartition, states.size());
 		}
@@ -393,6 +399,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		private int mAfterLast;
 		private int mAfterMarked;
 		private boolean mInWorklistIntCall;
+		private boolean mInWorklistRet;
 
 		public Block(final int first, final int last) {
 			assert first < last : "A block must contain at least one element.";
@@ -411,8 +418,18 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		}
 
 		public void removeFromWorklistIntCall() {
-			assert mInWorklistIntCall : "Block was not in worklist.";
+			assert mInWorklistIntCall : "Block was not in worklist Ret.";
 			mInWorklistIntCall = false;
+		}
+
+		public void addToWorklistRet() {
+			assert !mInWorklistRet : "Block already was in worklist Ret.";
+			mInWorklistRet = true;
+		}
+
+		public void removeFromWorklistRet() {
+			assert mInWorklistRet : "Block was not in worklist Ret.";
+			mInWorklistRet = false;
 		}
 
 		@Override
