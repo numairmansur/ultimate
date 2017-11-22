@@ -251,7 +251,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 	// TODO revise parameters after returns work
 	public void splitAll(final Collection<STATE> splitter, final boolean splitterHasMoreActionsIntCall,
-			final boolean isIntCallSplit, final Worklist<STATE> worklistIntCall) {
+			final boolean isIntCallSplit, final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
 		while (!mMarkedBlocks.isEmpty()) {
 			final Block block = mMarkedBlocks.pop();
 			if (block.mAfterMarked == block.mAfterLast) {
