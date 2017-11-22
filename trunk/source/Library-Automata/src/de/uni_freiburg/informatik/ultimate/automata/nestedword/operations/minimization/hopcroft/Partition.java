@@ -39,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
@@ -127,7 +129,8 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	}
 
 	private int initializeFromAutomatonFinalNonfinal(final Partition<STATE>.Block finals,
-			final Partition<STATE>.Block nonfinals, final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
+			final Partition<STATE>.Block nonfinals, final Worklist<STATE> worklistIntCall,
+			final Worklist<STATE> worklistRet) {
 		final Collection<STATE> states = mOperand.getStates();
 		int backwardPointer = mStates.length - 1;
 		for (final STATE state : states) {
@@ -277,9 +280,10 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 				block.mAfterMarked = block.mFirst;
 			}
 
+			// --- internal/call worklist ---
+
 			// add new (smaller) block to worklist unconditionally
 			worklistIntCall.add(newBlockSmaller);
-
 			// add old (bigger) block to worklist conditionally
 			if (mIsNondeterministic && !block.isInWorklistIntCall()) {
 				// for nondeterministic automata
@@ -291,6 +295,31 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 					worklistIntCall.add(block);
 				}
 			}
+
+			// --- return worklist ---
+			// add both blocks to worklist
+			worklistRet.add(newBlockSmaller);
+			if (!block.isInWorklistRet()) {
+				worklistRet.add(block);
+			}
+			// add all return successors to worklist
+			for (final STATE state : newBlockSmaller.getStates()) {
+				// successors via linear transition
+				for (final OutgoingReturnTransition<?, STATE> trans : mOperand.returnSuccessors(state)) {
+					addBlockToWorklistRetIfNotPresent(worklistRet, trans.getSucc());
+				}
+				// successors via hierarchical transition
+				for (final SummaryReturnTransition<?, STATE> trans : mOperand.summarySuccessors(state)) {
+					addBlockToWorklistRetIfNotPresent(worklistRet, trans.getSucc());
+				}
+			}
+		}
+	}
+
+	private void addBlockToWorklistRetIfNotPresent(final Worklist<STATE> worklistRet, final STATE state) {
+		final Partition<STATE>.Block block = getBlock(state);
+		if (!block.isInWorklistRet()) {
+			worklistRet.add(block);
 		}
 	}
 
@@ -420,6 +449,10 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		public void removeFromWorklistIntCall() {
 			assert mInWorklistIntCall : "Block was not in worklist Ret.";
 			mInWorklistIntCall = false;
+		}
+
+		public boolean isInWorklistRet() {
+			return mInWorklistRet;
 		}
 
 		public void addToWorklistRet() {
