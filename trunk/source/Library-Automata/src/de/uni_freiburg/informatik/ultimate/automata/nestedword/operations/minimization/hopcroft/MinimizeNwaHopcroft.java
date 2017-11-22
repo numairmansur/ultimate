@@ -102,10 +102,13 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private final Partition<STATE> mPartition;
 	private final Worklist<STATE> mWorklistIntCall;
 	private final Worklist<STATE> mWorklistRet;
+	// return split mode
 	private final ReturnSplitMode mReturnSplitMode;
+	private boolean mUsedLazyReturnSplits;
+	private IOutgoingReturnSplitter mOutgoingReturnSplitter;
 	/*
 	 * true only if the automaton is deterministic
-	 * This can be exploited for an efficient worklist policy, which is unsound for nondeterministic automata.
+	 * This can be exploited for an efficient worklist policy that is unsound for nondeterministic automata.
 	 */
 	private final boolean mIsDeterministic;
 
@@ -147,6 +150,8 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		printStartMessage();
 
 		mReturnSplitMode = ReturnSplitMode.LAZY;
+		mOutgoingReturnSplitter = new LinearOutgoingReturnSplitter<>(mOperand);
+
 		mIsDeterministic = CHECK_FOR_DETERMINISM ? new IsDeterministic<>(mServices, mOperand).getResult() : false;
 
 		mWorklistIntCall = Worklist.getWorklistIntCall(mOperand.size());
@@ -172,8 +177,27 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			if (!mWorklistRet.isEmpty()) {
 				markAndSplit(mWorklistRet, false);
 			} else {
+				final int partitionSize = mPartition.size();
+				switch (mReturnSplitMode) {
+					case MIXED:
+						if (!mUsedLazyReturnSplits) {
+							break;
+						}
+						//$FALL-THROUGH$
+					case LAZY:
+						mOutgoingReturnSplitter.markAndSplitByInconsistentOutgoingReturns();
+						mUsedLazyReturnSplits = false;
+						break;
+
+					case EAGER:
+						break;
+					default:
+						throw new IllegalArgumentException();
+				}
 				// terminate
-				break;
+				if (partitionSize == mPartition.size()) {
+					break;
+				}
 			}
 		}
 	}
