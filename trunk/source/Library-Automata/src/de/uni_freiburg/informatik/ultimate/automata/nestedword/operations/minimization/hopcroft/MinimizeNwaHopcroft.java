@@ -76,6 +76,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private enum ReturnSplitMode {
+		/**
+		 * Old MinimizeSevpa behavior. TODO describe
+		 */
+		LAZY,
+		/**
+		 * Old ShrinkNwa behavior. TODO describe
+		 */
+		EAGER,
+		/**
+		 * Mixed behavior. TODO describe
+		 */
+		MIXED
+	}
+
 	/*
 	 * Hopcroft's splitting policy allows to add only one of the two resulting blocks to the worklist. However, this is
 	 * only sound for deterministic automata. This flag controls if the operand should be checked for determinism
@@ -87,6 +102,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private final Partition<STATE> mPartition;
 	private final Worklist<STATE> mWorklistIntCall;
 	private final Worklist<STATE> mWorklistRet;
+	private final ReturnSplitMode mReturnSplitMode;
 	/*
 	 * true only if the automaton is deterministic
 	 * This can be exploited for an efficient worklist policy, which is unsound for nondeterministic automata.
@@ -130,6 +146,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mOperand = operand;
 		printStartMessage();
 
+		mReturnSplitMode = ReturnSplitMode.LAZY;
 		mIsDeterministic = CHECK_FOR_DETERMINISM ? new IsDeterministic<>(mServices, mOperand).getResult() : false;
 
 		mWorklistIntCall = Worklist.getWorklistIntCall(mOperand.size());

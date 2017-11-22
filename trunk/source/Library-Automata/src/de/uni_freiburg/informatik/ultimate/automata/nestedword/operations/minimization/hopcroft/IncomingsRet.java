@@ -41,41 +41,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
-	private enum ReturnSplitMode {
-		/**
-		 * Old MinimizeSevpa behavior. TODO describe
-		 */
-		LAZY,
-		/**
-		 * Old ShrinkNwa behavior. TODO describe
-		 */
-		EAGER,
-		/**
-		 * Mixed behavior. TODO describe
-		 */
-		MIXED
-	}
-
 	private final Partition<STATE> mPartition;
 	private final Set<LETTER> mVisitedLetters;
 	// maps block of (linear/hierarchical) predecessors to set of (hierarchical/linear) predecessors
 	private final HashMap<Partition<STATE>.Block, Pair<Integer, Set<STATE>>> mBlock2sizeAndSet;
 	private Iterator<Set<STATE>> mMarkSets;
-	private ReturnSplitMode mMode;
 	private Function<IncomingReturnTransition<LETTER, STATE>, STATE> mFirstStateFromTransition;
 	private Function<IncomingReturnTransition<LETTER, STATE>, STATE> mSecondStateFromTransition;
 	private boolean mLazyLinMode;
 
 	public IncomingsRet(final INestedWordAutomaton<LETTER, STATE> operand, final Collection<STATE> splitter,
 			final Partition<STATE> partition) {
-		this(operand, splitter, partition, ReturnSplitMode.LAZY);
-	}
-
-	public IncomingsRet(final INestedWordAutomaton<LETTER, STATE> operand, final Collection<STATE> splitter,
-			final Partition<STATE> partition, final ReturnSplitMode mode) {
 		super(operand, splitter);
 		mPartition = partition;
-		mMode = mode;
 		mVisitedLetters = new HashSet<>();
 		mBlock2sizeAndSet = new HashMap<>();
 		mMarkSets = Collections.emptyIterator();
@@ -114,21 +92,12 @@ public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
 			}
 			tryNextState();
 		}
-
-		// no state/letter left, continue depending on the mode
-		switch (mMode) {
-			case LAZY:
-				if (mLazyLinMode) {
-					changeLazyMode(false);
-					return hasNextLetter();
-				}
-				return false;
-
-			case EAGER:
-			case MIXED:
-			default:
-				throw new UnsupportedOperationException("Mode " + mMode + "not supported yet.");
+		// no state/letter left
+		if (mLazyLinMode) {
+			changeLazyMode(false);
+			return hasNextLetter();
 		}
+		return false;
 	}
 
 	@Override
@@ -156,16 +125,7 @@ public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
 						mBlock2sizeAndSet);
 			}
 		}
-
-		switch (mMode) {
-			case LAZY:
-				mMarkSets = new BlocksIterator();
-				break;
-			case EAGER:
-			case MIXED:
-			default:
-				throw new UnsupportedOperationException("Mode " + mMode + "not supported yet.");
-		}
+		mMarkSets = new BlocksIterator();
 	}
 
 	private void addStateToSetInBlockMap(final STATE state, final STATE blockState,
