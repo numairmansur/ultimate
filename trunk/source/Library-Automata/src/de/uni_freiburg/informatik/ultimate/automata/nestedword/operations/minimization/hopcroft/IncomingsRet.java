@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
 	private final Partition<STATE> mPartition;
 	private final Set<LETTER> mVisitedLetters;
 	// maps block of (linear/hierarchical) predecessors to set of (hierarchical/linear) predecessors
-	private final HashMap<Partition<STATE>.Block, Pair<Integer, Set<STATE>>> mBlock2sizeAndSet;
+	private final LinkedHashMap<Partition<STATE>.Block, Pair<Integer, Set<STATE>>> mBlock2sizeAndSet;
 	private Iterator<Set<STATE>> mMarkSets;
 	private Function<IncomingReturnTransition<LETTER, STATE>, STATE> mFirstStateFromTransition;
 	private Function<IncomingReturnTransition<LETTER, STATE>, STATE> mSecondStateFromTransition;
@@ -55,7 +55,7 @@ public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		super(operand, splitter);
 		mPartition = partition;
 		mVisitedLetters = new HashSet<>();
-		mBlock2sizeAndSet = new HashMap<>();
+		mBlock2sizeAndSet = new LinkedHashMap<>();
 		mMarkSets = Collections.emptyIterator();
 		changeLazyMode(true);
 	}
@@ -129,13 +129,13 @@ public class IncomingsRet<LETTER, STATE> extends Incomings<LETTER, STATE> {
 	}
 
 	private void addStateToSetInBlockMap(final STATE state, final STATE blockState,
-			final HashMap<Partition<STATE>.Block, Pair<Integer, Set<STATE>>> mBlock2sizeAndSet2) {
+			final LinkedHashMap<Partition<STATE>.Block, Pair<Integer, Set<STATE>>> block2sizeAndSet2) {
 		final Partition<STATE>.Block block = mPartition.getBlock(blockState);
-		final Pair<Integer, Set<STATE>> pair = mBlock2sizeAndSet2.get(block);
+		final Pair<Integer, Set<STATE>> pair = block2sizeAndSet2.get(block);
 		final Set<STATE> set;
 		if (pair == null) {
 			set = new HashSet<>();
-			mBlock2sizeAndSet2.put(block, new Pair<>(block.size(), set));
+			block2sizeAndSet2.put(block, new Pair<>(block.size(), set));
 		} else {
 			set = pair.getSecond();
 		}
