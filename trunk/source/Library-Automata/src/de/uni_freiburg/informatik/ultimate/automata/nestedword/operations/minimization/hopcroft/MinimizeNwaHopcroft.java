@@ -221,7 +221,7 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			for (final STATE state : incomings.next()) {
 				mPartition.mark(state);
 			}
-			mPartition.splitAll(splitter, incomings.hasNext(), mode == 1, mWorklistIntCall, mWorklistRet);
+			mPartition.splitAll(splitter, incomings.hasNext(), mode == 1);
 		}
 	}
 

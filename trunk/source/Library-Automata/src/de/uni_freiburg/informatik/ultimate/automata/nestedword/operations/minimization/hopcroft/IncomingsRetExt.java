@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -167,9 +169,12 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		// disjunctive separation (diagonal)
 		if (linBlock.size() > 1 && hierBlock.size() > 0) {
 			// FIXME
+			throw new UnsupportedOperationException("Not implemented yet.");
 		}
 
-		return createConsistentSeparation(separation);
+		final int hierBlockSize = hierBlock.size();
+		createConsistentSeparation(separation);
+		return hierBlockSize == hierBlock.size();
 	}
 
 	private void makeLineConsistent(final Set<Partition<STATE>.Block>[] targetBlocksLine,
@@ -193,14 +198,52 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		}
 	}
 
-	private boolean createConsistentSeparation(final Separation separation) {
+	private void createConsistentSeparation(final Separation separation) {
 		for (final Entry<Partition<STATE>.Block, SymmetricHashRelation<STATE>> entry : separation.mBlock2differences
 				.entrySet()) {
 			final Partition<STATE>.Block block = entry.getKey();
 			final SymmetricHashRelation<STATE> differences = entry.getValue();
+
+			// idea: start with first state in block and iteratively add possible states
+			final List<List<STATE>> subblocks = new ArrayList<>();
+			final Iterator<STATE> it = block.iterator();
+			subblocks.add(new ArrayList<>());
+			subblocks.get(0).add(it.next());
+			while (it.hasNext()) {
+				final STATE state1 = it.next();
+				boolean added = false;
+				for (final List<STATE> subblock : subblocks) {
+					// try to add to this block
+					boolean different = false;
+					for (final STATE state2 : subblock) {
+						if (differences.containsPair(state1, state2)) {
+							different = true;
+							break;
+						}
+					}
+					if (!different) {
+						subblock.add(state1);
+						added = true;
+						break;
+					}
+				}
+				if (!added) {
+					// add new subblock
+					final List<STATE> newSubblock = new ArrayList<>();
+					newSubblock.add(state1);
+					subblocks.add(newSubblock);
+				}
+			}
+			final Iterator<List<STATE>> subblocksIt = subblocks.iterator();
+			// performance trick: omit one of the subblocks because we have a partition
+			subblocksIt.next();
+			while (subblocksIt.hasNext()) {
+				for (final STATE state : subblocksIt.next()) {
+					mPartition.mark(state);
+				}
+				mPartition.splitAll(null, false, false);
+			}
 		}
-		// FIXME
-		return false;
 	}
 
 	@SuppressWarnings("unchecked")

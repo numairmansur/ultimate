@@ -70,6 +70,9 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 	private final Deque<Block> mMarkedBlocks;
 	// contains those blocks that contain an initial state in the final stage; LinkedHashSet for iteration order
 	private final LinkedHashSet<Block> mInitialBlocks;
+	// worklists
+	private final Worklist<STATE> mWorklistIntCall;
+	private final Worklist<STATE> mWorklistRet;
 	/*
 	 * true if the automaton is nondeterministic, in which case we cannot exploit the efficient worklist policy
 	 * (because it is unsound for nondeterministic automata)
@@ -88,6 +91,8 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		mSize = 0;
 		mMarkedBlocks = new ArrayDeque<>();
 		mInitialBlocks = new LinkedHashSet<>();
+		mWorklistIntCall = worklistIntCall;
+		mWorklistRet = worklistRet;
 		mIsNondeterministic = isNondeterministic;
 
 		if (initialPartition == null) {
@@ -254,7 +259,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 	// TODO revise parameters after returns work
 	public void splitAll(final Collection<STATE> splitter, final boolean splitterHasMoreActionsIntCall,
-			final boolean isIntCallSplit, final Worklist<STATE> worklistIntCall, final Worklist<STATE> worklistRet) {
+			final boolean isIntCallSplit) {
 		while (!mMarkedBlocks.isEmpty()) {
 			final Block block = mMarkedBlocks.pop();
 			if (block.mAfterMarked == block.mAfterLast) {
@@ -283,34 +288,34 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			// --- internal/call worklist ---
 
 			// add new (smaller) block to worklist unconditionally
-			worklistIntCall.add(newBlockSmaller);
+			mWorklistIntCall.add(newBlockSmaller);
 			// add old (bigger) block to worklist conditionally
 			if (mIsNondeterministic && !block.isInWorklistIntCall()) {
 				// for nondeterministic automata
-				worklistIntCall.add(block);
+				mWorklistIntCall.add(block);
 			} else if (block == splitter) {
 				// for the old block being the splitter and incoming transition analysis not having finished
 				if (isIntCallSplit && splitterHasMoreActionsIntCall) {
 					assert !block.isInWorklistIntCall() : "The splitter should have been removed from the worklist.";
-					worklistIntCall.add(block);
+					mWorklistIntCall.add(block);
 				}
 			}
 
 			// --- return worklist ---
 			// add both blocks to worklist
-			worklistRet.add(newBlockSmaller);
+			mWorklistRet.add(newBlockSmaller);
 			if (!block.isInWorklistRet() || !block.isInWorklistRetExt()) {
-				worklistRet.add(block);
+				mWorklistRet.add(block);
 			}
 			// add all return successors to worklist
 			for (final STATE state : newBlockSmaller.getStates()) {
 				// successors via linear transition
 				for (final OutgoingReturnTransition<?, STATE> trans : mOperand.returnSuccessors(state)) {
-					addBlockToWorklistRetIfNotPresent(worklistRet, trans.getSucc());
+					addBlockToWorklistRetIfNotPresent(mWorklistRet, trans.getSucc());
 				}
 				// successors via hierarchical transition
 				for (final SummaryReturnTransition<?, STATE> trans : mOperand.summarySuccessors(state)) {
-					addBlockToWorklistRetIfNotPresent(worklistRet, trans.getSucc());
+					addBlockToWorklistRetIfNotPresent(mWorklistRet, trans.getSucc());
 				}
 			}
 		}
