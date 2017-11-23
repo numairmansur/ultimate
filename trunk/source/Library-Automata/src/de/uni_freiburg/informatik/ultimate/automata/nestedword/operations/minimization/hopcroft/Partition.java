@@ -480,22 +480,18 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			mInWorklistRetExt = false;
 		}
 
+		public StatesIterator getStatesIterator() {
+			return new StatesIterator(mFirst);
+		}
+
+		public StatesIterator getStatesIterator(final StatesIterator it) {
+			return new StatesIterator(it.mIdx);
+		}
+
 		@Override
 		public Iterator<STATE> iterator() {
 			assert mAfterMarked == mFirst;
-			return new Iterator<STATE>() {
-				private int mIdx = mFirst;
-
-				@Override
-				public boolean hasNext() {
-					return mIdx < mAfterLast;
-				}
-
-				@Override
-				public STATE next() {
-					return mStates[mIdx++];
-				}
-			};
+			return getStatesIterator();
 		}
 
 		@Override
@@ -608,6 +604,24 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			}
 			builder.append(">");
 			return builder.toString();
+		}
+
+		protected class StatesIterator implements Iterator<STATE> {
+			private int mIdx;
+
+			public StatesIterator(final int first) {
+				mIdx = first;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return mIdx < mAfterLast;
+			}
+
+			@Override
+			public STATE next() {
+				return mStates[mIdx++];
+			}
 		}
 	}
 

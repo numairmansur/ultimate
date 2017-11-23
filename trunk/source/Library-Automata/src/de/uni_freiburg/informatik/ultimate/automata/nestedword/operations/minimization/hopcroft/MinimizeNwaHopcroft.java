@@ -104,7 +104,6 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private final WorklistRetExt<STATE> mWorklistRet;
 	// return split mode
 	private final ReturnSplitMode mReturnSplitMode;
-	private boolean mUsedLazyReturnSplits; // TODO use this!
 	/*
 	 * true only if the automaton is deterministic
 	 * This can be exploited for an efficient worklist policy that is unsound for nondeterministic automata.
@@ -178,15 +177,10 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 				final int partitionSize = mPartition.size();
 				switch (mReturnSplitMode) {
 					case MIXED:
-						if (!mUsedLazyReturnSplits) {
-							break;
-						}
-						//$FALL-THROUGH$
 					case LAZY:
-						if (!mWorklistRet.isEmptyExt()) {
+						while (partitionSize == mPartition.size() && !mWorklistRet.isEmptyExt()) {
 							markAndSplit(mWorklistRet, 3);
 						}
-						mUsedLazyReturnSplits = false;
 						break;
 
 					case EAGER:
