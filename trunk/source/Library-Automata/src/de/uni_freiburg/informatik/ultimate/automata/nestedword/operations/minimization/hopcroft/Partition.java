@@ -299,7 +299,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 			// --- return worklist ---
 			// add both blocks to worklist
 			worklistRet.add(newBlockSmaller);
-			if (!block.isInWorklistRet()) {
+			if (!block.isInWorklistRet() || !block.isInWorklistRetExt()) {
 				worklistRet.add(block);
 			}
 			// add all return successors to worklist
@@ -318,7 +318,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 
 	private void addBlockToWorklistRetIfNotPresent(final Worklist<STATE> worklistRet, final STATE state) {
 		final Partition<STATE>.Block block = getBlock(state);
-		if (!block.isInWorklistRet()) {
+		if (!block.isInWorklistRet() || !block.isInWorklistRetExt()) {
 			worklistRet.add(block);
 		}
 	}
@@ -429,6 +429,7 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		private int mAfterMarked;
 		private boolean mInWorklistIntCall;
 		private boolean mInWorklistRet;
+		private boolean mInWorklistRetExt;
 
 		public Block(final int first, final int last) {
 			assert first < last : "A block must contain at least one element.";
@@ -463,6 +464,20 @@ public class Partition<STATE> implements IAutomatonStatePartition<STATE> {
 		public void removeFromWorklistRet() {
 			assert mInWorklistRet : "Block was not in worklist Ret.";
 			mInWorklistRet = false;
+		}
+
+		public boolean isInWorklistRetExt() {
+			return mInWorklistRetExt;
+		}
+
+		public void addToWorklistRetExt() {
+			assert !mInWorklistRetExt : "Block already was in worklist Ret.";
+			mInWorklistRetExt = true;
+		}
+
+		public void removeFromWorklistRetExt() {
+			assert mInWorklistRetExt : "Block was not in worklist Ret.";
+			mInWorklistRetExt = false;
 		}
 
 		@Override

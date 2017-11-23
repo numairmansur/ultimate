@@ -101,11 +101,10 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final Partition<STATE> mPartition;
 	private final Worklist<STATE> mWorklistIntCall;
-	private final Worklist<STATE> mWorklistRet;
+	private final WorklistRetExt<STATE> mWorklistRet;
 	// return split mode
 	private final ReturnSplitMode mReturnSplitMode;
-	private boolean mUsedLazyReturnSplits;
-	private IOutgoingReturnSplitter mOutgoingReturnSplitter;
+	private boolean mUsedLazyReturnSplits; // TODO use this!
 	/*
 	 * true only if the automaton is deterministic
 	 * This can be exploited for an efficient worklist policy that is unsound for nondeterministic automata.
@@ -150,12 +149,11 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		printStartMessage();
 
 		mReturnSplitMode = ReturnSplitMode.LAZY;
-		mOutgoingReturnSplitter = new LinearOutgoingReturnSplitter<>(mOperand);
 
 		mIsDeterministic = CHECK_FOR_DETERMINISM ? new IsDeterministic<>(mServices, mOperand).getResult() : false;
 
 		mWorklistIntCall = Worklist.getWorklistIntCall(mOperand.size());
-		mWorklistRet = Worklist.getWorklistRet(mOperand.size());
+		mWorklistRet = WorklistRetExt.getWorklistRet(mOperand.size());
 		mPartition = new Partition<>(mOperand, initialPartition, separateFinalsAndNonfinals, mWorklistIntCall,
 				mWorklistRet, !mIsDeterministic);
 		mInitialPartitionSize = initialPartition == null ? 0 : initialPartition.getRelation().size();
@@ -172,10 +170,10 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private void minimize() {
 		while (true) {
 			while (!mWorklistIntCall.isEmpty()) {
-				markAndSplit(mWorklistIntCall, true);
+				markAndSplit(mWorklistIntCall, 1);
 			}
 			if (!mWorklistRet.isEmpty()) {
-				markAndSplit(mWorklistRet, false);
+				markAndSplit(mWorklistRet, 2);
 			} else {
 				final int partitionSize = mPartition.size();
 				switch (mReturnSplitMode) {
@@ -185,7 +183,9 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 						}
 						//$FALL-THROUGH$
 					case LAZY:
-						mOutgoingReturnSplitter.markAndSplitByInconsistentOutgoingReturns();
+						if (!mWorklistRet.isEmptyExt()) {
+							markAndSplit(mWorklistRet, 3);
+						}
 						mUsedLazyReturnSplits = false;
 						break;
 
@@ -194,25 +194,40 @@ public class MinimizeNwaHopcroft<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 					default:
 						throw new IllegalArgumentException();
 				}
-				// terminate
 				if (partitionSize == mPartition.size()) {
+					// terminate
 					break;
 				}
 			}
 		}
 	}
 
-	private void markAndSplit(final Worklist<STATE> worklist, final boolean isIntCall) {
-		final Collection<STATE> splitter = worklist.poll();
+	private void markAndSplit(final Worklist<STATE> worklist, final int mode) {
+		final Collection<STATE> splitter;
+		final Incomings<LETTER, STATE> incomings;
+		switch (mode) {
+			case 1:
+				splitter = worklist.poll();
+				incomings = new IncomingsIntCall<>(mOperand, splitter);
+				break;
+			case 2:
+				splitter = worklist.poll();
+				incomings = new IncomingsRet<>(mOperand, splitter, mPartition);
+				break;
+			case 3:
+				// TODO avoid cast/add enum
+				splitter = ((WorklistRetExt<STATE>) worklist).pollExt();
+				incomings = new IncomingsRetExt<>(mOperand, splitter, mPartition);
+				break;
+			default:
+				throw new IllegalArgumentException();
+		}
 		final int splitterSize = splitter.size();
-		final Incomings<LETTER, STATE> incomings = isIntCall
-				? new IncomingsIntCall<>(mOperand, splitter)
-				: new IncomingsRet<>(mOperand, splitter, mPartition);
 		while (splitter.size() == splitterSize && incomings.hasNext()) {
 			for (final STATE state : incomings.next()) {
 				mPartition.mark(state);
 			}
-			mPartition.splitAll(splitter, incomings.hasNext(), isIntCall, mWorklistIntCall, mWorklistRet);
+			mPartition.splitAll(splitter, incomings.hasNext(), mode == 1, mWorklistIntCall, mWorklistRet);
 		}
 	}
 

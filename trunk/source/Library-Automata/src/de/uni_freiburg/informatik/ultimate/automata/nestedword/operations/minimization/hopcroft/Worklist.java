@@ -36,7 +36,7 @@ public class Worklist<STATE> {
 	private final Consumer<Partition<STATE>.Block> mAddBlockFunction;
 	private final Consumer<Partition<STATE>.Block> mRemoveBlockFunction;
 
-	private Worklist(final int initialCapacity, final Consumer<Partition<STATE>.Block> addBlockFunction,
+	protected Worklist(final int initialCapacity, final Consumer<Partition<STATE>.Block> addBlockFunction,
 			final Consumer<Partition<STATE>.Block> removeBlockFunction) {
 		mQueue = new PriorityQueue<>(initialCapacity, new BlockComparator());
 		mAddBlockFunction = addBlockFunction;
@@ -72,18 +72,26 @@ public class Worklist<STATE> {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
+		toStringHelper(builder);
+		return builder.toString();
+	}
+
+	protected void toStringHelper(final StringBuilder builder) {
+		addToStringBuilder(builder, mQueue);
+	}
+
+	protected void addToStringBuilder(final StringBuilder builder, final PriorityQueue<Partition<STATE>.Block> queue) {
 		builder.append("[");
 		String append = "";
-		for (final Partition<STATE>.Block block : mQueue) {
+		for (final Partition<STATE>.Block block : queue) {
 			builder.append(append);
 			append = ", ";
 			builder.append(block);
 		}
 		builder.append("]");
-		return builder.toString();
 	}
 
-	private class BlockComparator implements Comparator<Partition<STATE>.Block> {
+	protected class BlockComparator implements Comparator<Partition<STATE>.Block> {
 		@Override
 		public int compare(final Partition<STATE>.Block b1, final Partition<STATE>.Block b2) {
 			return b1.size() - b2.size();
