@@ -154,16 +154,17 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		final Separation separation = new Separation();
 
 		// simple, unambiguous separation (vertical and horizontal)
-		final Set<Partition<STATE>.Block>[] hierRow = initializeArray(hierBlock.size());
 		for (int j = 0; j < linColumns.length; ++j) {
-			final Set<Partition<STATE>.Block>[] linColumn = linColumns[j];
-			if (j == 0) {
-				makeLineConsistent(linColumn, linBlock, separation);
+			// vertical separation
+			makeLineConsistent(linColumns[j], linBlock, separation);
+		}
+		final Set<Partition<STATE>.Block>[] hierRow = initializeArray(linColumns.length);
+		final int linBlockSize = linColumns[0].length;
+		for (int i = 0; i < linBlockSize; ++i) {
+			for (int j = 0; j < hierRow.length; ++j) {
+				hierRow[j] = linColumns[j][i];
 			}
-
-			for (int i = 0; i < linColumn.length; ++i) {
-				hierRow[i] = linColumns[j][i];
-			}
+			// horizontal separation
 			makeLineConsistent(hierRow, hierBlock, separation);
 		}
 
