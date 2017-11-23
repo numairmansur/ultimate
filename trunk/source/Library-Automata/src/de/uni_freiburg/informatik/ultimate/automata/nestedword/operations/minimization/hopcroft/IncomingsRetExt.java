@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -141,7 +142,7 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		if (!mDoubleDecker.isDoubleDecker(lin, hier)) {
 			return null;
 		}
-		succBlocks = new HashSet<>();
+		succBlocks = new LinkedHashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(lin, hier, mNextLetter)) {
 			succBlocks.add(mPartition.getBlock(trans.getSucc()));
 		}
