@@ -106,7 +106,9 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 					mNextLetter)) {
 				final Partition<STATE>.Block linBlock = mPartition.getBlock(trans.getLinPred());
 				final Partition<STATE>.Block hierBlock = mPartition.getBlock(trans.getHierPred());
-				hierBlock2linBlocks.addPair(hierBlock, linBlock);
+				if (linBlock.size() > 1 || hierBlock.size() > 1) {
+					hierBlock2linBlocks.addPair(hierBlock, linBlock);
+				}
 			}
 		}
 
