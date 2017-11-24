@@ -1,9 +1,14 @@
 // Testfile dumped by Ultimate at 2012/10/08 16:15:29
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeNwaHopcroftSize = numberOfStates(minimizeNwaHopcroft(preprocessed));
+print(minimizeNwaHopcroftSize);
+assert(minimizeNwaHopcroftSize == 5624);
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 5633);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
 print(shrinkNwaSize);
 assert(shrinkNwaSize == 2215);
 
