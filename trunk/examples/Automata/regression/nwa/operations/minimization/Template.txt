@@ -6,6 +6,7 @@ print(numberOfStates(removeNonLiveStates(nwa)));
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
+int minimizeNwaHopcroftSize = numberOfStates(minimizeNwaHopcroft(preprocessed));
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
 int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
@@ -21,6 +22,7 @@ int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDela
 int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
 int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
 
+print(minimizeNwaHopcroftSize);
 print(minimizeSevpaSize);
 print(shrinkNwaSize);
 print(minimizeNwaPmaxSatSize);
@@ -36,6 +38,7 @@ print(reduceNwaDelayedFullMultipebbleSimulationSize);
 print(reduceBuchiFairDirectSimulationSize);
 print(reduceBuchiFairSimulationSize);
 
+// assert(minimizeNwaHopcroftSize == 999);
 // assert(minimizeSevpaSize == 999);
 // assert(shrinkNwaSize == 999);
 // assert(minimizeNwaPmaxSatSize == 999);
