@@ -176,7 +176,7 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		}
 
 		// disjunctive separation (diagonal)
-		if (linBlock.size() > 1 && hierBlock.size() > 0) {
+		if (linBlock.size() > 1 && hierBlock.size() > 1) {
 			makeMatrixConsistent(targetBlocksColumns, linBlock, hierBlock, separation);
 		}
 
