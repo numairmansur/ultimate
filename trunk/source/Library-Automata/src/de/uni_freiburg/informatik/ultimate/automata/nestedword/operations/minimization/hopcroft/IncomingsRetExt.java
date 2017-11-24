@@ -229,11 +229,14 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 				continue;
 			}
 			for (int j = 1; j < targetBlocksColumns.length; ++j) {
-				final Partition<STATE>.Block.StatesIterator it2 = hierBlock.getStatesIterator(it1);
+				// TODO bad performance, skip separated state pairs
+				final Partition<STATE>.Block.StatesIterator it2 = linBlock.getStatesIterator();
+				int i2 = -1;
 				while (it2.hasNext()) {
+					++i2;
 					final STATE hier = it2.next();
-					final Set<Partition<STATE>.Block> targetBlocks2 = targetBlocksColumns[j][i];
-					if (targetBlocks2 == null) {
+					final Set<Partition<STATE>.Block> targetBlocks2 = targetBlocksColumns[j][i2];
+					if (targetBlocks2 == null || i == i2) {
 						continue;
 					}
 					if (!targetBlocks1.equals(targetBlocks2)) {
