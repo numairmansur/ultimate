@@ -161,18 +161,22 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		final Separation separation = new Separation();
 
 		// simple, unambiguous separation (vertical and horizontal)
-		for (int j = 0; j < targetBlocksColumns.length; ++j) {
-			// vertical separation
-			makeLineConsistent(targetBlocksColumns[j], linBlock, separation);
-		}
-		final Set<Partition<STATE>.Block>[] hierRow = initializeArray(targetBlocksColumns.length);
-		final int linBlockSize = targetBlocksColumns[0].length;
-		for (int i = 0; i < linBlockSize; ++i) {
-			for (int j = 0; j < hierRow.length; ++j) {
-				hierRow[j] = targetBlocksColumns[j][i];
+		if (linBlock.size() > 1) {
+			for (int j = 0; j < targetBlocksColumns.length; ++j) {
+				// vertical separation
+				makeLineConsistent(targetBlocksColumns[j], linBlock, separation);
 			}
-			// horizontal separation
-			makeLineConsistent(hierRow, hierBlock, separation);
+		}
+		if (hierBlock.size() > 1) {
+			final Set<Partition<STATE>.Block>[] hierRow = initializeArray(targetBlocksColumns.length);
+			final int linBlockSize = targetBlocksColumns[0].length;
+			for (int i = 0; i < linBlockSize; ++i) {
+				for (int j = 0; j < hierRow.length; ++j) {
+					hierRow[j] = targetBlocksColumns[j][i];
+				}
+				// horizontal separation
+				makeLineConsistent(hierRow, hierBlock, separation);
+			}
 		}
 
 		// disjunctive separation (diagonal)
