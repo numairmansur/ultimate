@@ -3,8 +3,8 @@
 //Do internal transitions work?
 NestedWordAutomaton preIntTest = removeUnreachable(intTest);
 
-int minimizeNwaPmaxSatDelayedSizeIntTest = numberOfStates(minimizeNwaPmaxSatDelayed(preIntTest));
-assert(minimizeNwaPmaxSatDelayedSizeIntTest == 3);
+// int minimizeNwaPmaxSatDelayedSizeIntTest = numberOfStates(minimizeNwaPmaxSatDelayed(preIntTest));
+// assert(minimizeNwaPmaxSatDelayedSizeIntTest == 3);
 //print(minimizeNwaPmaxSatDelayedSizeIntTest);
 
 NestedWordAutomaton intTest = (
@@ -28,7 +28,7 @@ NestedWordAutomaton intTest = (
 NestedWordAutomaton preCallTest = removeUnreachable(callTest);
 
 int minimizeNwaPmaxSatDelayedSizeCallTest = numberOfStates(minimizeNwaPmaxSatDelayed(preCallTest));
-assert(minimizeNwaPmaxSatDelayedSizeCallTest == 3);
+// assert(minimizeNwaPmaxSatDelayedSizeCallTest == 3);
 //print(minimizeNwaPmaxSatDelayedSizeCallTest);
 
 NestedWordAutomaton callTest = (
