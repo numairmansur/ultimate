@@ -123,17 +123,17 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		for (final Entry<Partition<STATE>.Block, Partition<STATE>.Block> pair : hierBlock2linBlocks.entrySet()) {
 			final Partition<STATE>.Block hierBlock = pair.getKey();
 			final Partition<STATE>.Block linBlock = pair.getValue();
-			final Set<Partition<STATE>.Block>[][] linColumns = initializeMatrix(hierBlock.size());
+			final Set<Partition<STATE>.Block>[][] targetBlocksColumns = initializeMatrix(hierBlock.size());
 			int j = 0;
 			for (final STATE hier : hierBlock) {
-				final Set<Partition<STATE>.Block>[] linColumn = initializeArray(linBlock.size());
+				final Set<Partition<STATE>.Block>[] targetBlocksLine = initializeArray(linBlock.size());
 				int i = 0;
 				for (final STATE lin : linBlock) {
-					linColumn[i++] = createLinColumn(hier, lin);
+					targetBlocksLine[i++] = createLinColumn(hier, lin);
 				}
-				linColumns[j++] = linColumn;
+				targetBlocksColumns[j++] = targetBlocksLine;
 			}
-			fullAnalysis = fullAnalysis && makeConsistent(linColumns, linBlock, hierBlock);
+			fullAnalysis = fullAnalysis && makeConsistent(targetBlocksColumns, linBlock, hierBlock);
 		}
 
 		return new Pair<>(res, fullAnalysis);
@@ -151,20 +151,20 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 		return succBlocks;
 	}
 
-	private boolean makeConsistent(final Set<Partition<STATE>.Block>[][] linColumns,
+	private boolean makeConsistent(final Set<Partition<STATE>.Block>[][] targetBlocksColumns,
 			final Partition<STATE>.Block linBlock, final Partition<STATE>.Block hierBlock) {
 		final Separation separation = new Separation();
 
 		// simple, unambiguous separation (vertical and horizontal)
-		for (int j = 0; j < linColumns.length; ++j) {
+		for (int j = 0; j < targetBlocksColumns.length; ++j) {
 			// vertical separation
-			makeLineConsistent(linColumns[j], linBlock, separation);
+			makeLineConsistent(targetBlocksColumns[j], linBlock, separation);
 		}
-		final Set<Partition<STATE>.Block>[] hierRow = initializeArray(linColumns.length);
-		final int linBlockSize = linColumns[0].length;
+		final Set<Partition<STATE>.Block>[] hierRow = initializeArray(targetBlocksColumns.length);
+		final int linBlockSize = targetBlocksColumns[0].length;
 		for (int i = 0; i < linBlockSize; ++i) {
 			for (int j = 0; j < hierRow.length; ++j) {
-				hierRow[j] = linColumns[j][i];
+				hierRow[j] = targetBlocksColumns[j][i];
 			}
 			// horizontal separation
 			makeLineConsistent(hierRow, hierBlock, separation);
@@ -172,8 +172,7 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 
 		// disjunctive separation (diagonal)
 		if (linBlock.size() > 1 && hierBlock.size() > 0) {
-			// FIXME
-			throw new UnsupportedOperationException("Not implemented yet.");
+			makeMatrixConsistent(targetBlocksColumns, linBlock, hierBlock, separation);
 		}
 
 		final int hierBlockSize = hierBlock.size();
@@ -184,21 +183,55 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 	private void makeLineConsistent(final Set<Partition<STATE>.Block>[] targetBlocksLine,
 			final Partition<STATE>.Block block, final Separation separation) {
 		final Partition<STATE>.Block.StatesIterator it1 = block.getStatesIterator();
-		int i = 0;
+		int i = -1;
 		while (it1.hasNext()) {
+			++i;
 			final STATE s1 = it1.next();
 			final Set<Partition<STATE>.Block> targetBlocks1 = targetBlocksLine[i];
+			if (targetBlocks1 == null) {
+				continue;
+			}
 			final Partition<STATE>.Block.StatesIterator it2 = block.getStatesIterator(it1);
-			int j = i + 1;
+			int j = i;
 			while (it2.hasNext()) {
+				++j;
 				final STATE s2 = it2.next();
 				final Set<Partition<STATE>.Block> targetBlocks2 = targetBlocksLine[j];
-				++j;
+				if (targetBlocks2 == null) {
+					continue;
+				}
 				if (!targetBlocks1.equals(targetBlocks2)) {
 					separation.separate(block, s1, s2);
 				}
 			}
+		}
+	}
+
+	private void makeMatrixConsistent(final Set<Partition<STATE>.Block>[][] targetBlocksColumns,
+			final Partition<STATE>.Block linBlock, final Partition<STATE>.Block hierBlock,
+			final IncomingsRetExt<LETTER, STATE>.Separation separation) {
+		final Partition<STATE>.Block.StatesIterator it1 = linBlock.getStatesIterator();
+		int i = -1;
+		while (it1.hasNext()) {
 			++i;
+			final STATE lin = it1.next();
+			final Set<Partition<STATE>.Block> targetBlocks1 = targetBlocksColumns[0][i];
+			if (targetBlocks1 == null) {
+				continue;
+			}
+			for (int j = 1; j < targetBlocksColumns.length; ++j) {
+				final Partition<STATE>.Block.StatesIterator it2 = hierBlock.getStatesIterator(it1);
+				while (it2.hasNext()) {
+					final STATE hier = it2.next();
+					final Set<Partition<STATE>.Block> targetBlocks2 = targetBlocksColumns[j][i];
+					if (targetBlocks2 == null) {
+						continue;
+					}
+					if (!targetBlocks1.equals(targetBlocks2)) {
+						separation.separate(linBlock, lin, hier);
+					}
+				}
+			}
 		}
 	}
 
