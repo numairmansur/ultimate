@@ -124,14 +124,19 @@ public class IncomingsRetExt<LETTER, STATE> extends Incomings<LETTER, STATE> {
 			final Partition<STATE>.Block hierBlock = pair.getKey();
 			final Partition<STATE>.Block linBlock = pair.getValue();
 			final Set<Partition<STATE>.Block>[][] targetBlocksColumns = initializeMatrix(hierBlock.size());
-			int j = 0;
+			int j = -1;
 			for (final STATE hier : hierBlock) {
+				j++;
+				if (linBlock.size() == 1 && hierBlock.size() == 1) {
+					// skip singleton blocks
+					continue;
+				}
 				final Set<Partition<STATE>.Block>[] targetBlocksLine = initializeArray(linBlock.size());
 				int i = 0;
 				for (final STATE lin : linBlock) {
 					targetBlocksLine[i++] = createLinColumn(hier, lin);
 				}
-				targetBlocksColumns[j++] = targetBlocksLine;
+				targetBlocksColumns[j] = targetBlocksLine;
 			}
 			fullAnalysis = fullAnalysis && makeConsistent(targetBlocksColumns, linBlock, hierBlock);
 		}
